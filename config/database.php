@@ -2,8 +2,8 @@
 // Configuration for Database Connection
 $host = 'localhost';
 $db   = 'restoran_ecommerce';
-$user = 'root'; // Adjust as per your XAMPP/Laragon settings
-$pass = '';     // Adjust as per your XAMPP/Laragon settings
+$user = 'root';
+$pass = '';     
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
