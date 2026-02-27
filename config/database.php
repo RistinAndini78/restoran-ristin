@@ -1,6 +1,6 @@
 <?php
 // Configuration for Database Connection
-$host = 'localhost';
+$host = '127.0.0.1';
 $db   = 'restoran_ecommerce';
 $user = 'resto_user';
 $pass = '12345';
