@@ -6,39 +6,23 @@ require_once '../includes/functions.php';
 requireAdmin();
 
 // Handle Add/Edit Product
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = $_POST['category_id'];
+    $name = trim($_POST['name']);
+    $description = trim($_POST['description']);
+    $price = $_POST['price'];
+    $stock = $_POST['stock'];
+    $id = isset($_POST['id']) ? $_POST['id'] : null;
 
-    // WAJIBKAN GAMBAR
-    if (empty($_FILES['image']['name'])) {
-        die("Gambar wajib diisi!");
+    $image = "";
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $filename = time() . '.' . $ext;
+        $target = "../uploads/" . $filename;
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+            $image = $filename;
+        }
     }
-
-    $image = null;
-
-    $filename = time() . "_" . basename($_FILES['image']['name']);
-    $target = "../uploads/" . $filename;
-
-    if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-        $image = $filename;
-    } else {
-        die("Upload gambar gagal!");
-    }
-
-    $stmt = $pdo->prepare("
-        INSERT INTO products (name, description, price, category_id, image)
-        VALUES (?, ?, ?, ?, ?)
-    ");
-
-    $stmt->execute([$name, $description, $price, $category_id, $image]);
-
-    header("Location: products.php");
-    exit;
-}
 
     if ($id) {
         // Edit
@@ -60,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         setFlashMessage('danger', 'Gagal menyimpan produk!');
     }
+}
 
 // Handle Delete Product
 if (isset($_GET['delete'])) {
