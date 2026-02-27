@@ -2,8 +2,8 @@
 // Configuration for Database Connection
 $host = 'localhost';
 $db   = 'restoran_ecommerce';
-$user = 'root';
-$pass = '';     
+$user = 'remoteku';
+$pass = 'passwordku';     
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
