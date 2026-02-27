@@ -2,7 +2,7 @@
 // Configuration for Database Connection
 $host = 'localhost';
 $db   = 'restoran_ecommerce';
-$user = 'remoteku';
+$user = 'remoteuser';
 $pass = 'passwordku';     
 $charset = 'utf8mb4';
 
