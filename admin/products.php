@@ -14,13 +14,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stock = $_POST['stock'];
     $id = isset($_POST['id']) ? $_POST['id'] : null;
 
-    $image = "";
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $filename = time() . '.' . $ext;
-        $target = "../uploads/" . $filename;
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            $image = $filename;
+    if (isset($_FILES['image']) && $_FILES['image']['name'] != "") {
+        if ($_FILES['image']['error'] === 0) {
+            $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $filename = time() . '.' . $ext;
+            $upload_dir = __DIR__ . "/../uploads/";
+            
+            // Ensure directory exists
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            $target = $upload_dir . $filename;
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+                $image = $filename;
+            } else {
+                setFlashMessage('danger', 'Gagal memindahkan file yang diunggah ke folder uploads. Periksa izin folder.');
+                redirect('products.php');
+            }
+        } else {
+            $error_msg = match($_FILES['image']['error']) {
+                1 => 'Ukuran file terlalu besar (melebihi upload_max_filesize di php.ini).',
+                2 => 'Ukuran file terlalu besar (melebihi MAX_FILE_SIZE).',
+                3 => 'File hanya terunggah sebagian.',
+                6 => 'Folder sementara (tmp) tidak ditemukan.',
+                7 => 'Gagal menulis file ke disk.',
+                default => 'Terjadi kesalahan saat mengunggah file (Kode: ' . $_FILES['image']['error'] . ').'
+            };
+            setFlashMessage('danger', $error_msg);
+            redirect('products.php');
         }
     }
 
@@ -42,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->execute($params)) {
         setFlashMessage('success', 'Produk berhasil disimpan!');
     } else {
-        setFlashMessage('danger', 'Gagal menyimpan produk!');
+        setFlashMessage('danger', 'Gagal menyimpan data produk ke database!');
     }
 }
 
