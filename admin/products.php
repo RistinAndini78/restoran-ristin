@@ -5,79 +5,37 @@ require_once '../includes/functions.php';
 
 requireAdmin();
 
-/* ================================
-   HANDLE ADD / EDIT PRODUCT
-================================ */
+// Handle Add/Edit Product
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     $category_id = $_POST['category_id'];
-    $name        = trim($_POST['name']);
+    $name = trim($_POST['name']);
     $description = trim($_POST['description']);
-    $price       = $_POST['price'];
-    $stock       = $_POST['stock'];
-    $id          = isset($_POST['id']) ? $_POST['id'] : null;
+    $price = $_POST['price'];
+    $stock = $_POST['stock'];
+    $id = isset($_POST['id']) ? $_POST['id'] : null;
 
-    $image = null;
-
-    // WAJIB GAMBAR SAAT TAMBAH
-    if (!$id && empty($_FILES['image']['name'])) {
-        setFlashMessage('danger', 'Gambar wajib diisi!');
-        redirect('products.php');
-        exit;
-    }
-
-    // JIKA ADA FILE DIUPLOAD
-    if (!empty($_FILES['image']['name'])) {
-
-        if ($_FILES['image']['error'] !== 0) {
-            setFlashMessage('danger', 'Terjadi kesalahan saat upload gambar!');
-            redirect('products.php');
-            exit;
-        }
-
-        $allowed = ['jpg','jpeg','png','webp'];
-        $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-
-        if (!in_array($ext, $allowed)) {
-            setFlashMessage('danger', 'Format gambar tidak didukung!');
-            redirect('products.php');
-            exit;
-        }
-
-        $filename = time() . '_' . uniqid() . '.' . $ext;
-        $target   = "../uploads/" . $filename;
-
+    $image = "";
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $filename = time() . '.' . $ext;
+        $target = "../uploads/" . $filename;
         if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
             $image = $filename;
-        } else {
-            setFlashMessage('danger', 'Upload gambar gagal!');
-            redirect('products.php');
-            exit;
         }
     }
 
-    /* ================================
-       INSERT ATAU UPDATE
-    ================================ */
-
     if ($id) {
-        // EDIT
+        // Edit
         if ($image) {
-            $stmt = $pdo->prepare("UPDATE products 
-                                   SET category_id=?, name=?, description=?, price=?, stock=?, image=? 
-                                   WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE products SET category_id=?, name=?, description=?, price=?, stock=?, image=? WHERE id=?");
             $params = [$category_id, $name, $description, $price, $stock, $image, $id];
         } else {
-            $stmt = $pdo->prepare("UPDATE products 
-                                   SET category_id=?, name=?, description=?, price=?, stock=? 
-                                   WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE products SET category_id=?, name=?, description=?, price=?, stock=? WHERE id=?");
             $params = [$category_id, $name, $description, $price, $stock, $id];
         }
     } else {
-        // ADD
-        $stmt = $pdo->prepare("INSERT INTO products 
-                               (category_id, name, description, price, stock, image) 
-                               VALUES (?, ?, ?, ?, ?, ?)");
+        // Add
+        $stmt = $pdo->prepare("INSERT INTO products (category_id, name, description, price, stock, image) VALUES (?, ?, ?, ?, ?, ?)");
         $params = [$category_id, $name, $description, $price, $stock, $image];
     }
 
@@ -86,43 +44,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         setFlashMessage('danger', 'Gagal menyimpan produk!');
     }
-
-    redirect('products.php');
-    exit;
 }
 
-/* ================================
-   HANDLE DELETE
-================================ */
+// Handle Delete Product
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
-
-    $stmt = $pdo->prepare("SELECT image FROM products WHERE id=?");
+    // Get image name to delete file
+    $stmt = $pdo->prepare("SELECT image FROM products WHERE id = ?");
     $stmt->execute([$id]);
     $prod = $stmt->fetch();
-
-    if ($prod && $prod['image']) {
+    if ($prod['image']) {
         @unlink("../uploads/" . $prod['image']);
     }
 
-    $stmt = $pdo->prepare("DELETE FROM products WHERE id=?");
-    $stmt->execute([$id]);
-
-    setFlashMessage('success', 'Produk berhasil dihapus!');
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
+    if ($stmt->execute([$id])) {
+        setFlashMessage('success', 'Produk berhasil dihapus!');
+    }
     redirect('products.php');
-    exit;
 }
 
-/* ================================
-   LOAD DATA
-================================ */
-$products = $pdo->query("
-    SELECT p.*, c.name as category_name
-    FROM products p
-    JOIN categories c ON p.category_id = c.id
-    ORDER BY p.id DESC
-")->fetchAll();
-
+$products = $pdo->query("SELECT p.*, c.name as category_name 
+                         FROM products p 
+                         JOIN categories c ON p.category_id = c.id 
+                         ORDER BY p.id DESC")->fetchAll();
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 ?>
 
@@ -260,7 +205,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" name="add_product" class="btn btn-primary">Simpan Produk</button>
+                <button type="submit" class="btn btn-primary">Simpan Produk</button>
             </div>
         </form>
     </div>
