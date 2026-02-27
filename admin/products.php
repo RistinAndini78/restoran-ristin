@@ -260,7 +260,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" class="btn btn-primary">Simpan Produk</button>
+                <button type="submit" name="add_product" class="btn btn-primary">Simpan Produk</button>
             </div>
         </form>
     </div>
