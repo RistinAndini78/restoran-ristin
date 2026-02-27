@@ -14,13 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stock = $_POST['stock'];
     $id = isset($_POST['id']) ? $_POST['id'] : null;
 
+    $image = "";
     if (isset($_FILES['image']) && $_FILES['image']['name'] != "") {
         if ($_FILES['image']['error'] === 0) {
             $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
             $filename = time() . '.' . $ext;
             $upload_dir = __DIR__ . "/../uploads/";
             
-            // Ensure directory exists
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
@@ -29,18 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
                 $image = $filename;
             } else {
-                setFlashMessage('danger', 'Gagal memindahkan file yang diunggah ke folder uploads. Periksa izin folder.');
+                setFlashMessage('danger', 'Gagal memindahkan file yang diunggah.');
                 redirect('products.php');
             }
         } else {
-            $error_msg = match($_FILES['image']['error']) {
-                1 => 'Ukuran file terlalu besar (melebihi upload_max_filesize di php.ini).',
-                2 => 'Ukuran file terlalu besar (melebihi MAX_FILE_SIZE).',
-                3 => 'File hanya terunggah sebagian.',
-                6 => 'Folder sementara (tmp) tidak ditemukan.',
-                7 => 'Gagal menulis file ke disk.',
-                default => 'Terjadi kesalahan saat mengunggah file (Kode: ' . $_FILES['image']['error'] . ').'
-            };
+            $error_code = $_FILES['image']['error'];
+            $error_msg = 'Terjadi kesalahan saat mengunggah file.';
+            switch ($error_code) {
+                case 1: $error_msg = 'Ukuran file terlalu besar (Limit Server).'; break;
+                case 2: $error_msg = 'Ukuran file terlalu besar (Limit Form).'; break;
+                case 3: $error_msg = 'File hanya terunggah sebagian.'; break;
+                case 6: $error_msg = 'Folder sementara tidak ditemukan.'; break;
+                case 7: $error_msg = 'Gagal menulis file ke disk.'; break;
+            }
             setFlashMessage('danger', $error_msg);
             redirect('products.php');
         }
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($id) {
         // Edit
-        if ($image) {
+        if ($image != "") {
             $stmt = $pdo->prepare("UPDATE products SET category_id=?, name=?, description=?, price=?, stock=?, image=? WHERE id=?");
             $params = [$category_id, $name, $description, $price, $stock, $image, $id];
         } else {
