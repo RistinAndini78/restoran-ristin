@@ -19,17 +19,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_FILES['image']['error'] === 0) {
             $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
             $filename = time() . '.' . $ext;
-            $upload_dir = __DIR__ . "/../uploads/";
+            $upload_dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
             
             if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+                @mkdir($upload_dir, 0777, true);
+            }
+
+            if (!is_writable($upload_dir)) {
+                $real_path = realpath($upload_dir) ?: $upload_dir;
+                setFlashMessage('danger', 'Folder uploads tidak dapat ditulis. Path: ' . $real_path);
+                redirect('products.php');
             }
 
             $target = $upload_dir . $filename;
             if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
                 $image = $filename;
             } else {
-                setFlashMessage('danger', 'Gagal memindahkan file yang diunggah.');
+                $error_info = "Gagal memindahkan file. ";
+                $error_info .= "Temp: " . $_FILES['image']['tmp_name'] . (file_exists($_FILES['image']['tmp_name']) ? " (Ada)" : " (Tidak Ada)");
+                $error_info .= " | Target: " . $target;
+                setFlashMessage('danger', $error_info);
                 redirect('products.php');
             }
         } else {
